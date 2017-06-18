@@ -9,7 +9,8 @@ core/HardwareSerial0.cpp.o: \
  /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/Print.h \
  /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/Printable.h \
  /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/USBAPI.h \
- /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/variants/mega/pins_arduino.h \
+ /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/variants/eightanaloginputs/pins_arduino.h \
+ /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/variants/eightanaloginputs/../standard/pins_arduino.h \
  /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/HardwareSerial_private.h \
  /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/wiring_private.h
 
@@ -31,7 +32,9 @@ core/HardwareSerial0.cpp.o: \
 
 /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/USBAPI.h:
 
-/home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/variants/mega/pins_arduino.h:
+/home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/variants/eightanaloginputs/pins_arduino.h:
+
+/home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/variants/eightanaloginputs/../standard/pins_arduino.h:
 
 /home/kaktus/sloeber/arduinoPlugin/packages/arduino/hardware/avr/1.6.15/cores/arduino/HardwareSerial_private.h:
 

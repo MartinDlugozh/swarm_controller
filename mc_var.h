@@ -1,31 +1,39 @@
 #ifndef MC_VAR_H_
 #define MC_VAR_H_
 
-uint8_t 	flag_guide			= 0;
+/**
+ * Main loop timers
+ * sys_tim - основной таймер (контроль загрузки процессора и т.п.)
+ * loop_5Hz - отправка комманд ведомому
+ * loop_1Hz - отладочные сообщения
+ */
+struct {
+	volatile uint32_t sys_tim;
+	volatile uint32_t coord_dt[2];
+	volatile uint32_t loop_50Hz;
+	volatile uint32_t loop_5Hz;
+	volatile uint32_t loop_1Hz;
+}main_timer = { 0, 0, 0, 0, 0, 0 };
 
-uint8_t 	leader_connected 	= 0;
-uint8_t 	followers_connected = 0;
+struct Connection{
+	uint8_t leader;
+	uint8_t followers;
+	uint8_t gcs;
+}connect = { 0, 0, 0, };
+
+uint8_t flag_guide = 0;
 
 /**
  * Координаты лидера в системе NED (D отрицателен)
  * leader_home_x и leader_home_y необходимы, т.к. переход от глобальных координат GPS в NED
  * выполняется на этом МК
  */
-//double 		leader_x 			= 0;
-//double 		leader_y 			= 0;
-//float 		leader_z 			= 0;
-//int 		zone 				= 0;
-//
-//float 		leader_home_x 		= 0;
-//float 		leader_home_y 		= 0;
-
-float 		x 					= 0;
-float 		y 					= 0;
-float 		z 					= 0;
-
-//float 		follower_home_x 	= 0;
-//float 		follower_home_y 	= 0;
-//float 		follower_home_z 	= 0;
+struct
+{
+	float x;
+	float y;
+	float z;
+}relative_c = { 0, 0, 0 }, relative_p = { 0, 0, 0 };
 
 struct
 {
@@ -40,5 +48,9 @@ struct
 	double curr_z;
 	uint16_t curr_hdg;
 	int curr_zone;
+	float vx;
+	float vy;
+	float vz;
 }follower[FOLL_NUM_MAX] = {0}, leader = {0};
+
 #endif /* MC_VAR_H_ */
