@@ -7,7 +7,6 @@ void do_request_stream_pos(HardwareSerial &uart, uint8_t sys_id)
 	mavlink_msg_request_data_stream_pack(MY_SYS_ID, MY_COMP_ID, &r_msg,
 			sys_id, 0, MAV_DATA_STREAM_POSITION, 10, 1);
 	send_message(&r_msg, uart);
-//	delay(500);
 }
 
 void do_set_guided(HardwareSerial &uart, uint8_t sys_id_follower)
@@ -54,7 +53,6 @@ void do_takeoff(float altitude, HardwareSerial &uart, uint8_t sys_id_follower)
 	mavlink_msg_command_long_pack(MY_SYS_ID, MY_COMP_ID, &t_msg, sys_id_follower, 0,
 			MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, altitude);
 	send_message(&t_msg, uart); t_msg = {0};
-//	delay(500);
 
 	mavlink_msg_command_long_pack(MY_SYS_ID, MY_COMP_ID, &t_msg, sys_id_follower, 0,
 			MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, altitude);
@@ -76,7 +74,6 @@ void do_goto(float x, float y, float z, uint16_t hdg, HardwareSerial &uart, uint
 			x, y, (-z), 0, 0, 0, 0, 0, 0, 0, 0);
 	send_message(&g_msg, uart); g_msg = {0};
 
-// TODO: Check the behavior of your copter after reacing this command
 	mavlink_msg_command_long_pack(MY_SYS_ID, MY_COMP_ID, &g_msg, sys_id_follower, 0,
 			MAV_CMD_CONDITION_YAW, (hdg/100.0f), 180, 0, 0, 0, 0, 0, 0);
 	send_message(&g_msg, uart);
@@ -98,8 +95,6 @@ void do_go_home(float x, float y, float z, int zone, HardwareSerial &uart, uint8
 			(int32_t)(x*10000000.0f), (int32_t)(y*10000000.0f), z,
 			0, 0, 0, 0, 0, 0, 0, 0);
 	send_message(&h_msg, uart); h_msg = {0};
-
-//	delay(sqrt(pow(OFFS_X_p, 2) + pow(OFFS_Y_p, 2))*1000);
 
 	double lat, lon;
 	UTMtoLL((x/0.997756835f), (y/0.999420961f), zone, lat, lon);

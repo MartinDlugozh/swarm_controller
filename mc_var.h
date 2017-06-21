@@ -3,25 +3,43 @@
 
 /**
  * Main loop timers
- * sys_tim - основной таймер (контроль загрузки процессора и т.п.)
- * loop_5Hz - отправка комманд ведомому
- * loop_1Hz - отладочные сообщения
+ * coord_dt[2] - приращение времени
+ * 				 (интегрирование скорости при определении приращения координаты)
+ * loop_50Hz - обновление вывода периферийных блоков
+ * loop_5Hz - отправка команд ведомым
+ * loop_1Hz - отладочные сообщения и heartbeat
  */
 struct {
-	volatile uint32_t sys_tim;
 	volatile uint32_t coord_dt[2];
+	volatile uint32_t guide;
 	volatile uint32_t loop_50Hz;
 	volatile uint32_t loop_5Hz;
 	volatile uint32_t loop_1Hz;
-}main_timer = { 0, 0, 0, 0, 0, 0 };
+}main_timer = { 0, 0, 0, 0, 0 };
 
+/**
+ * Connection timers
+ * leader - состояние соединения с АП ведущего БПЛА
+ * followers - состояние соединения с АП ведомого БПЛА
+ * gcs - - состояние соединения с наземной станцией
+ */
 struct Connection{
 	uint8_t leader;
 	uint8_t followers;
 	uint8_t gcs;
 }connect = { 0, 0, 0, };
 
-uint8_t flag_guide = 0;
+/**
+ * Main loop flag
+ * флаг состояния выполнения главного цикла
+ */
+uint8_t flag_guide = 0; // стадия выполнения программы (значения описаны в заголовке "mc_config.h"
+uint8_t flag_guide_timer = 0; // флаг таймера задержек при переходе к следующей стадии
+
+/**
+ * Значение задержки при переходе к следующей стадии
+ */
+uint16_t guide_timer_delay = 0;
 
 /**
  * Координаты лидера в системе NED (D отрицателен)
@@ -35,6 +53,11 @@ struct
 	float z;
 }relative_c = { 0, 0, 0 }, relative_p = { 0, 0, 0 };
 
+/**
+ * AP parameters
+ * Параметры подключенных к МК автопилотов
+ * timer - время крайнего heartbeat от АП
+ */
 struct
 {
 	uint8_t sys_id;

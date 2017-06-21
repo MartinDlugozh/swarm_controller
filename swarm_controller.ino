@@ -11,12 +11,12 @@
 #include "Arduino.h"
 #include "inc.h"
 
-int freeRam()
-{
-  extern int __heap_start, *__brkval;
-  int v;
-  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-}
+//int freeRam()
+//{
+//  extern int __heap_start, *__brkval;
+//  int v;
+//  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+//}
 
 /**
  * Main source headers
@@ -30,7 +30,6 @@ void setup()
 {
 	buzz_init();
 	UART_DEF.begin(BAUD_DEF);
-//	delay(2000);
 
 	param_load_all();
 	if(FOLL_NUM_p > 30)
@@ -77,6 +76,11 @@ void loop()
 	}
 }
 
+/**
+ * Прием сообщений MAVLink от ведущего БПЛА и от наземной станции управления
+ * Выполняестя всегда, как только есть свободное процессорное время и проверяет наличие
+ * информации в приемном буфере UART; если что-то пришло, передаем это парсеру
+ */
 void loop_imm(void)
 {
 	if(UART_DEF.available() > 0)
@@ -89,20 +93,14 @@ void loop_imm(void)
 
 		if (mavlink_parse_char(MAVLINK_COMM_0, c, &rd, &status))
 		{
-			handler_followers(rd);
-			/**
-			 * Обрабатываем телеметрию от ведущего
-			 */
-			if(rd.sysid == SYS_ID_LEADER)
+			handler_followers(rd); // обрабатываем телеметрию от ведомых
+
+			if(rd.sysid == SYS_ID_LEADER)	// обрабатываем телеметрию от ведущего
 			{
 				handler_leader(rd);
 			}
 
-			/**
-			 * Обработка данных от наземной станции
-			 * Прием параметров
-			 */
-			if (rd.sysid == SYS_ID_GCS)
+			if (rd.sysid == SYS_ID_GCS) 	// обработка данных от наземной станции (прием и отправка параметров)
 			{
 				handler_gcs(rd);
 			}
@@ -111,11 +109,31 @@ void loop_imm(void)
 	}
 }
 
+/**
+ * Обновление вывода периферийных блоков и таймера
+ * Вызывает обновление состояния вывода пьезоизлучателя а также
+ * проверяет на переполнение таймер задержки при переходе к следующей стадии РСП
+ */
 void loop_50Hz(void)
 {
 	buzz_update();
+
+	// Проверка переполнения таймера
+	if(((millis() - main_timer.guide) >= guide_timer_delay) && (flag_guide_timer == TIMER_SET))
+	{
+		flag_guide_timer = TIMER_RELEASED;  // освободили таймер
+		if(flag_guide == GUIDE_LANDING)
+		{
+			flag_guide = GUIDE_NOT_GUIDED;	// после посадки переходим в состояние инициализации
+		}else{
+			flag_guide++;	// или переходим к следующей стадии РСП
+		}
+	}
 }
 
+/**
+ * Отправка команд выдомым (позиционнирование)
+ */
 void loop_5Hz(void)
 {
 	for (uint8_t i = 0; i < FOLL_NUM_p; i++) // for each folower
@@ -152,6 +170,10 @@ void loop_5Hz(void)
 	}
 }
 
+/**
+ * Проверка состояния соединиений и отправка сообщений, необходимых для
+ * идентификации системы в сети
+ */
 void loop_1Hz(void)
 {
 	heartbeat_send(UART_DEF);

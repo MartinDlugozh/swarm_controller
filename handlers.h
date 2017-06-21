@@ -3,6 +3,13 @@
 
 #include "actions.h"
 
+void set_guide_timer(uint16_t delay)
+{
+	guide_timer_delay = delay;
+	flag_guide_timer = TIMER_SET;
+	main_timer.guide = millis();
+}
+
 void handler_gcs(mavlink_message_t &rd)
 {
 	switch (rd.msgid)
@@ -50,62 +57,89 @@ void handler_leader(mavlink_message_t &rd)
 	case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
 	{
 		uint16_t chan6_raw = mavlink_msg_rc_channels_raw_get_chan6_raw(&rd);
-		if((chan6_raw > 1500) && (flag_guide != GUIDE_GUIDED))		// если ведомые не в режиме следования и принята команда на переключение в РСП
+		if((chan6_raw > 1500) && (flag_guide != GUIDE_GUIDED) && (flag_guide_timer == TIMER_RELEASED))		// если ведомые не в режиме следования и принята команда на переключение в РСП
 		{
-			for (uint8_t i = 0; i < FOLL_NUM_p; i++)
+			switch(flag_guide){
+			case GUIDE_NOT_GUIDED:
 			{
-				do_set_guided(UART_DEF, follower[i].sys_id);
-			}
-			delay(500);
-			for (uint8_t i = 0; i < FOLL_NUM_p; i++)
-			{
-				do_arm(UART_DEF, follower[i].sys_id);
-			}
-			delay(1500);
-			for (uint8_t i = 0; i < FOLL_NUM_p; i++)
-			{
-				do_takeoff(TKOFF_ALT_p, UART_DEF, follower[i].sys_id);
-			}
-//			delay(TKOFF_ALT_p*1000);
+				leader.home_x = leader.curr_x;		// текущие координаты лидера устанавливаем как координаты его home
+				leader.home_y = leader.curr_y;
+				leader.home_z = leader.curr_z;
 
-			leader.home_x = leader.curr_x;		// текущие координаты лидера устанавливаем как координаты его home
-			leader.home_y = leader.curr_y;
-			leader.home_z = leader.curr_z;
+				buzz(200);
 
-			switch((uint8_t)INIT_POS_p)
-			{
-			case POS_START:		// с текущего положения: оставляем текщие координаты как home
-			{
 				for (uint8_t i = 0; i < FOLL_NUM_p; i++)
 				{
-					follower[i].home_x = follower[i].curr_x;
-					follower[i].home_y = follower[i].curr_y;
-					follower[i].home_z = 0;
+					do_set_guided(UART_DEF, follower[i].sys_id);
 				}
+
+				set_guide_timer(GUIDE_DELAY_GEN);
 				break;
 			}
-			case POS_OFFS:	// со смещениями относительно лидера
+			case GUIDE_GEN:
 			{
 				for (uint8_t i = 0; i < FOLL_NUM_p; i++)
 				{
-					follower[i].home_x = leader.home_x + OFFS_X_p;
-					follower[i].home_y = leader.home_y + OFFS_Y_p;
-					follower[i].home_z = leader.home_z + OFFS_Z_p;
-
-					do_go_home(follower[i].home_x, follower[i].home_y, follower[i].home_z, leader.curr_zone,
-							UART_DEF, follower[i].sys_id);
+					do_arm(UART_DEF, follower[i].sys_id);
 				}
+
+				set_guide_timer(GUIDE_DELAY_ARM);
+				break;
+			}
+			case GUIDE_ARM:
+			{
+				for (uint8_t i = 0; i < FOLL_NUM_p; i++)
+				{
+					do_takeoff(TKOFF_ALT_p, UART_DEF, follower[i].sys_id);
+				}
+
+				set_guide_timer(GUIDE_DELAY_TAKEOFF * TKOFF_ALT_p);
+				break;
+			}
+			case GUIDE_TAKEOFF:
+			{
+				switch((uint8_t)INIT_POS_p)
+				{
+				case POS_START:		// с текущего положения: оставляем текщие координаты как home
+				{
+					for (uint8_t i = 0; i < FOLL_NUM_p; i++)
+					{
+						follower[i].home_x = follower[i].curr_x;
+						follower[i].home_y = follower[i].curr_y;
+						follower[i].home_z = 0;
+					}
+				break;
+				}
+				case POS_OFFS:	// со смещениями относительно лидера
+				{
+					for (uint8_t i = 0; i < FOLL_NUM_p; i++)
+					{
+						follower[i].home_x = leader.home_x + OFFS_X_p;
+						follower[i].home_y = leader.home_y + OFFS_Y_p;
+						follower[i].home_z = OFFS_Z_p;
+
+						do_go_home(follower[i].home_x, follower[i].home_y, follower[i].home_z, leader.curr_zone,
+						UART_DEF, follower[i].sys_id);
+					}
+				break;
+				}
+				default:
+					break;
+				}
+				flag_guide = GUIDE_GUIDED;
+				break;
+			}
+			case GUIDE_GUIDED:
+			{
+				/*...*/
 				break;
 			}
 			default:
 				break;
 			}
-
-			flag_guide = GUIDE_GUIDED;
-			buzz(200);
 		}
 
-		if((chan6_raw < 1500) && (flag_guide == GUIDE_GUIDED))//MAV_CMD_NAV_LAND
+		if((chan6_raw < 1500) && (flag_guide == GUIDE_GUIDED) && (flag_guide_timer == TIMER_RELEASED))//MAV_CMD_NAV_LAND
 		{
 			leader.home_x = 0;
 			leader.home_y = 0;
@@ -120,6 +154,7 @@ void handler_leader(mavlink_message_t &rd)
 			}
 
 			flag_guide = GUIDE_LANDING;
+			set_guide_timer(1000);
 			buzz(200);
 		}
 		break;
@@ -139,25 +174,19 @@ void handler_leader(mavlink_message_t &rd)
 		leader.curr_y = leader.curr_y * (float)0.999420961;
 		leader.curr_hdg = mavlink_msg_global_position_int_get_hdg(&rd);
 
-		leader.vx = mavlink_msg_global_position_int_get_vx(&rd);
-		leader.vy = mavlink_msg_global_position_int_get_vy(&rd);
-		leader.vz = mavlink_msg_global_position_int_get_vz(&rd);
+		if(POS_TYPE_p == 1){
+			leader.vx = mavlink_msg_global_position_int_get_vx(&rd);
+			leader.vy = mavlink_msg_global_position_int_get_vy(&rd);
+			leader.vz = mavlink_msg_global_position_int_get_vz(&rd);
+
+			relative_p.x = leader.vx * dt;
+			relative_p.y = leader.vy * dt;
+			relative_p.z = leader.vz * dt + TKOFF_ALT_p;
+		}
 
 		relative_c.x = leader.curr_x - leader.home_x;
 		relative_c.y = leader.curr_y - leader.home_y;
-		relative_c.z = leader.curr_z - leader.home_z;
-
-		relative_p.x = leader.vx * dt;
-		relative_p.y = leader.vy * dt;
-		relative_p.z = leader.vz * dt;
-
-		// TODO: check behavior of altitude control for the case of using offsets (line 190)
-//					if ((uint8_t)INIT_POS_p == POS_OFFS)
-//					{
-//						z = leader.curr_z + OFFS_Z_p;
-//					}else{
-//						z = leader.curr_z;
-//					}
+		relative_c.z = leader.curr_z - leader.home_z + TKOFF_ALT_p;
 
 		break;
 	}

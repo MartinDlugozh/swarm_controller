@@ -2,12 +2,11 @@
 //This is a automatic generated file
 //Please do not modify this file
 //If you touch this file your change will be overwritten during the next build
-//This file has been generated on 2017-06-18 21:45:42
+//This file has been generated on 2017-06-21 11:12:45
 
 #include "Arduino.h"
 #include "Arduino.h"
 #include "inc.h"
-int freeRam() ;
 void setup() ;
 void loop() ;
 void loop_imm(void) ;
