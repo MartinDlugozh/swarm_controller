@@ -49,6 +49,7 @@ void handler_leader(mavlink_message_t &rd)
 		if(connect.leader == 0)
 		{
 			connect.leader = 1;
+			do_request_stream_pos(UART_DEF, SYS_ID_LEADER);
 			buzz(1000);
 		}
 		leader.timer = millis();

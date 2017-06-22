@@ -20,8 +20,8 @@
 #define MY_SYS_ID				99						// SYSTEM_ID микроконтроллера
 #define MY_COMP_ID				0						// COMPONNENT_ID микроконтроллера
 
-#define SYS_ID_LEADER 			1						// SYSTEM_ID ведущего коптера
-#define SYS_ID_FOLLOWER 		2						// SYSTEM_ID ведомого коптера (в плане перенести в раздел параметров для большего числа бортов в группе)
+#define SYS_ID_LEADER 			1						// SYSTEM_ID ведущего БПЛА
+#define SYS_ID_FOLLOWER 		2						// SYSTEM_ID ведомого БПЛА (в плане перенести в раздел параметров для большего числа бортов в группе)
 #define FOLL_NUM_MAX 			1
 
 #define TYPE_POS_BITMASK		0b0000111111111000 		// Маска для SET_POS_TARGET - NED(x,y,-z)
@@ -31,7 +31,7 @@
 #define STABILIZE_B				81						// Режим Stabilize (Set mode)
 #define STABILIZE_C				0						// Режим Stabilize (Set mode)
 
-#define GUIDE_NOT_GUIDED 		0						// Флаг стадии полета - инициализация
+#define GUIDE_NOT_GUIDED 		0						// Флаг стадии полета (РСП) - инициализация
 #define GUIDE_GEN	 			1						// ФСП - разрешение режима GUIDED выполнено
 #define GUIDE_ARM				2						// ФСП - ARM ведомых БПЛА выполнен
 #define GUIDE_TAKEOFF			3						// ФСП - взлет ведомых БПЛА выполнен
